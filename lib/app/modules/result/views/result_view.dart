@@ -44,7 +44,7 @@ class ResultView extends GetView<ResultController> {
               },
             ),
           ),
-          Text("Detected Poses: ${poses.length}"),
+          Text("Detected Poses: ${controller.detectionController.height} cm"),
           // Optional: Display calculated height or other pose-related data
         ],
       );
