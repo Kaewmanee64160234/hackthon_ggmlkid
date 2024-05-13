@@ -4,6 +4,8 @@ import '../modules/detection/bindings/detection_binding.dart';
 import '../modules/detection/views/detection_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/result/bindings/result_binding.dart';
+import '../modules/result/views/result_view.dart';
 
 part 'app_routes.dart';
 
@@ -22,6 +24,11 @@ class AppPages {
       name: _Paths.DETECTION,
       page: () => const DetectionView(),
       binding: DetectionBinding(),
+    ),
+    GetPage(
+      name: _Paths.RESULT,
+      page: () => ResultView(),
+      binding: ResultBinding(),
     ),
   ];
 }

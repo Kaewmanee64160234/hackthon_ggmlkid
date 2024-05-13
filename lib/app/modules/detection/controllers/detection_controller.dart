@@ -1,39 +1,49 @@
-import 'package:camera/camera.dart';
 import 'package:get/get.dart';
-import 'package:hmsmt/app/data/types/RecognitionModel.dart';
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 
 class DetectionController extends GetxController {
-  //TODO: Implement DetectionController
-  var isCameraInitialized = false.obs;
   CameraController? cameraController;
-  var isDetecting = false.obs;
-  List<RecognitionModel>? recognitions;
-
+  List<CameraDescription>? cameras;
+  // Observable image path
+  var imagePath = ''.obs;
+  final RxBool isCameraInitialized = false.obs;
+  List<Pose> detectedPoses = [];
   @override
   void onInit() {
     super.onInit();
     initializeCamera();
   }
 
-  @override
-  void onClose() {
-    cameraController
-        ?.dispose(); // Ensure the camera is disposed when the controller is closed
-    super.onClose();
+  Future<void> initializeCamera() async {
+    final cameras = await availableCameras();
+    if (cameras.isNotEmpty) {
+      cameraController = CameraController(cameras[0], ResolutionPreset.medium);
+      await cameraController!.initialize();
+      isCameraInitialized.value = true;
+    }
   }
 
-  void initializeCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isNotEmpty) {
-        cameraController = CameraController(cameras[0], ResolutionPreset.high);
-        await cameraController!.initialize();
-        isCameraInitialized.value = true; // Use observable for UI updates
-      } else {
-        print("No available cameras");
-      }
-    } catch (e) {
-      print('Error initializing camera: $e');
+  // Capture image and update path
+  Future<void> captureImage() async {
+    if (cameraController != null && cameraController!.value.isInitialized) {
+      final image = await cameraController!.takePicture();
+      detectPoses(image.path);
     }
+  }
+
+  Future<void> detectPoses(String imagePath_) async {
+    final inputImage = InputImage.fromFilePath(imagePath_);
+    final poseDetector = GoogleMlKit.vision.poseDetector();
+    detectedPoses = await poseDetector.processImage(inputImage);
+    imagePath.value = imagePath_;
+    print(detectedPoses);
+  }
+
+  @override
+  void onClose() {
+    cameraController?.dispose();
+    super.onClose();
   }
 }

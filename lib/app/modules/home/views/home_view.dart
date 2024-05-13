@@ -14,7 +14,7 @@ class HomeView extends GetView<HomeController> {
         // goto detection view
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            Get.toNamed('/detection');
+            Get.offAndToNamed('/detection');
           },
           child: Icon(Icons.camera),
         ),

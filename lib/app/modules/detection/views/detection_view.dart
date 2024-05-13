@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 
 import '../controllers/detection_controller.dart';
 
@@ -10,46 +11,27 @@ class DetectionView extends GetView<DetectionController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Camera Preview'),
+      appBar: AppBar(title: const Text("Height Measurement")),
+      body: Center(
+        child: Obx(() {
+          if (controller.isCameraInitialized.isTrue) {
+            return CameraPreview(
+                controller.cameraController!); // Display camera feed
+          } else {
+            return const Text("Loading camera...");
+          }
+        }),
       ),
-      body: Obx(() {
-        // Check if the camera is initialized
-        if (controller.isCameraInitialized.isTrue) {
-          // Display the camera preview
-          return Column(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Container(
-                  child: CameraPreview(
-                      controller.cameraController!), // Camera preview
-                ),
-              ),
-              Expanded(
-                flex: 1,
-                child: ListView.builder(
-                  itemCount: controller.recognitions?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    final recognition = controller.recognitions![index];
-                    return ListTile(
-                      title: Text(
-                          "recognition.lable"), // Assuming RecognitionModel has a label
-                      subtitle: Text(
-                          "Confidence: ${recognition}%"), // Assuming it has a confidence field
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        } else {
-          // Show a loading spinner if the camera is not ready yet
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-      }),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await controller.captureImage();
+          if (controller.detectedPoses.isNotEmpty) {
+            Get.toNamed('/result');
+          }
+        },
+        tooltip: 'Capture Image',
+        child: const Icon(Icons.camera),
+      ),
     );
   }
 }
