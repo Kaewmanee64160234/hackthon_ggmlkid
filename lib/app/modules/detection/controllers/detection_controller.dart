@@ -6,15 +6,27 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 class DetectionController extends GetxController {
   CameraController? cameraController;
   List<CameraDescription>? cameras;
-  // Observable image path
   var imagePath = ''.obs;
   final RxBool isCameraInitialized = false.obs;
   List<Pose> detectedPoses = [];
   RxDouble height = 0.0.obs;
+
+  // Conversion factor (initialize with a default or calculated value)
+  RxDouble conversionFactor =
+      (0.0264).obs; // Placeholder, should be calculated via calibration
   @override
   void onInit() {
     super.onInit();
     initializeCamera();
+  }
+
+  void calibrateConversionFactor(
+      double knownHeightCm, double knownHeightPixels) {
+    conversionFactor.value = knownHeightCm / knownHeightPixels;
+  }
+
+  double pixelToCentimeters(double pixels) {
+    return pixels * conversionFactor.value;
   }
 
   Future<void> initializeCamera() async {
@@ -45,37 +57,18 @@ class DetectionController extends GetxController {
 
   double calculateHeight(List<Pose> poses) {
     if (poses.isEmpty) return 0;
-
-    // Get the first detected pose
     Pose pose = poses.first;
-
-    // Landmarks
-    PoseLandmark? headTop = pose.landmarks[
-        PoseLandmarkType.leftEye]; // Using left eye as an approximation
+    PoseLandmark? headTop = pose.landmarks[PoseLandmarkType.leftEye];
     PoseLandmark? ankleLeft = pose.landmarks[PoseLandmarkType.leftAnkle];
     PoseLandmark? ankleRight = pose.landmarks[PoseLandmarkType.rightAnkle];
 
     if (headTop == null || ankleLeft == null || ankleRight == null) {
-      return 0; // Cannot calculate height without essential points
+      return 0;
     }
 
-    // Calculate average ankle position
     double ankleAverageY = (ankleLeft.y + ankleRight.y) / 2;
-
-    // Calculate pixel distance from head top to average ankle position
     double heightInPixels = ankleAverageY - headTop.y;
-
-    // Convert pixel distance to real world measurement
-    double heightInCentimeters = pixelToCentimeters(heightInPixels);
-
-    return heightInCentimeters;
-  }
-
-  double pixelToCentimeters(double pixels) {
-    // Placeholder conversion factor
-    double conversionFactor =
-        0.0264; // Example conversion factor: depends on image DPI and distance
-    return pixels * conversionFactor;
+    return pixelToCentimeters(heightInPixels);
   }
 
   @override
